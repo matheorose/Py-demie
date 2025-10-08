@@ -3,6 +3,7 @@ import random
 from typing import Tuple
 from .Humain import Humain
 from ..Enums.Sex import Sex
+from ..Enums.Direction import Direction 
 
 Coord = Tuple[int, int]
 
@@ -36,11 +37,16 @@ class World:
     def place_at(self, x: int, y: int, person: Humain) -> bool:
         """Place un humain sur (x,y) si la case est libre. Retourne True si OK."""
         print("place_at")
-        if self.is_empty((x, y) and (self.in_bounds(x, y))):
+        
+        if self.is_empty(x, y):
             self.grid[y][x] = person
-            person.coordoneeY = y
-            person.coordoneeX = x
+            
+             # si l'objet Humain ne possède pas ces attributs, ceci n'explose pas
+            if hasattr(person, "coord_x"): person.coord_x = x
+            if hasattr(person, "coord_y"): person.coord_y = y
+
             return True
+        
         print("Impossible de placer l'humain : " + person + ", sur la case x: "+ x +", y: " + y)
         return False
 
@@ -60,6 +66,7 @@ class World:
 
         x, y = random.choice(cases_vides)
         self.grille[y][x] = humain
+
         humain.coordoneeX = x
         humain.coordoneeY = y
         return True
@@ -120,6 +127,63 @@ class World:
                 break  # grille pleine
 
         return humains_places
+    
+    
+    
+    
+    def _wrap(self, x: int, y: int) -> Coord:
+        """Applique l'effet torus : dépassement d'un bord -> réapparaît de l'autre côté."""
+        return (x % self.largeur, y % self.hauteur)
+    
+    
+    # ---------- déplacement principal ----------
+    def deplacer(self, person: Humain, direction: Direction) -> bool:
+        """
+        Déplace 'person' d'une case selon 'direction' (torus).
+        - Si la case est occupée, essaie d'autres directions au hasard.
+        - Si toutes les cases voisines sont occupées, la personne ne bouge pas.
+        - Retourne True si déplacement effectué, False sinon.
+        """
+        # 0) vérifications de base
+        if not person.vivant:
+            print("la persone n'est pas vivante")
+            return False
+        
+        x, y = person.coordoneeX, person.coordoneeY
+        if x is None or y is None or not self.in_bounds(x, y) or self.grille[y][x] is not person:
+            # pas sur la grille / coords incohérentes
+            print("les informations d'entrées sont incohérentes")
+            return False
+
+        # 1) liste des directions candidates :
+        #    - d'abord la direction demandée
+        #    - puis les autres directions (aléatoires)
+        all_dirs = list(Direction)
+        # on exclut l'immobilité si elle existe (dx=dy=0)
+        all_dirs = [d for d in all_dirs if getattr(d, "dx", d.value[0]) != 0 or getattr(d, "dy", d.value[1]) != 0]
+
+        # place la direction demandée en tête
+        others = [d for d in all_dirs if d != direction]
+        random.shuffle(others)
+        candidates = [direction] + others
+
+        # 2) on essaie chaque direction candidate jusqu'à trouver une case libre
+        for d in candidates:
+            dx = getattr(d, "dx", d.value[0])
+            dy = getattr(d, "dy", d.value[1])
+            nx, ny = self._wrap(x + dx, y + dy)
+            if self.is_empty(nx, ny):
+                # déplacer
+                self.grille[y][x] = None
+                self.grille[ny][nx] = person
+                person.coordoneeX = nx
+                person.coordoneeY = ny
+                return True
+
+        # 3) aucune case voisine libre -> on ne bouge pas
+        print("Aucune case voisine libre -> on ne bouge pas")
+        return False
+
 
     # ---------- tick (à coder plus tard) ----------
     def tick(self) -> None:
