@@ -1,6 +1,6 @@
 import random
 from dataclasses import dataclass
-from ..Enums.Sex import Sex
+from Enums.Sex import Sex
 
 @dataclass
 class Humain:

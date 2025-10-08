@@ -1,9 +1,9 @@
 # Models/world.py
 import random
-from typing import Tuple
+from typing import Iterable, List, Tuple
 from .Humain import Humain
-from ..Enums.Sex import Sex
-from ..Enums.Direction import Direction 
+from Enums.Sex import Sex
+from Enums.Direction import Direction 
 
 Coord = Tuple[int, int]
 
@@ -20,6 +20,7 @@ class World:
         print("init")
         self.largeur = width
         self.hauteur = height
+        self.humans: List[Humain] = []
         # Grille 2D : chaque case peut contenir un Humain ou None
         self.grille = [[None for _ in range(width)] for _ in range(height)]
 
@@ -32,18 +33,18 @@ class World:
 
     def is_empty(self, x: int, y: int) -> bool:
         """verifier si la case est vide"""
-        return self.in_bounds(x, y) and (self.grid[y][x] is None)
+        return self.in_bounds(x, y) and (self.grille[y][x] is None)
 
     def place_at(self, x: int, y: int, person: Humain) -> bool:
         """Place un humain sur (x,y) si la case est libre. Retourne True si OK."""
         print("place_at")
         
         if self.is_empty(x, y):
-            self.grid[y][x] = person
+            self.grille[y][x] = person
             
              # si l'objet Humain ne possède pas ces attributs, ceci n'explose pas
-            if hasattr(person, "coord_x"): person.coord_x = x
-            if hasattr(person, "coord_y"): person.coord_y = y
+            if hasattr(person, "coordoneeX"): person.coordoneeX = x
+            if hasattr(person, "coordoneeY"): person.coordoneeY = y
 
             return True
         
@@ -69,6 +70,7 @@ class World:
 
         humain.coordoneeX = x
         humain.coordoneeY = y
+        self.humans.append(humain)
         return True
     
 
@@ -183,10 +185,58 @@ class World:
         # 3) aucune case voisine libre -> on ne bouge pas
         print("Aucune case voisine libre -> on ne bouge pas")
         return False
+    
+    # + utilitaire
+    def each_human(self):   
+        for y in range(self.hauteur):
+            for x in range(self.largeur):
+                h = self.grille[y][x]
+                if h is not None:
+                    yield h
 
 
-    # ---------- tick (à coder plus tard) ----------
+    def _to_string(self) -> str:
+        """
+        Construit une représentation ASCII de la grille :
+        - '1' si case occupée, '0' sinon
+        - '|' pour les colonnes, lignes horizontales en '-'
+        """
+        # ligne horizontale (—) : largeur * 4 (espaces + séparateurs) + 1 bord
+        hline = "-" * (self.largeur * 4 + 1)
+        lines = [hline]
+        for y in range(self.hauteur):
+            row_cells = []
+            for x in range(self.largeur):
+                row_cells.append(f" {1 if self.grille[y][x] is not None else 0} ")
+            row = "|" + "|".join(row_cells) + "|"
+            lines.append(row)
+            lines.append(hline)
+        return "\n".join(lines)
+        
+
+    # ---------- tick (exemple minimal) ----------
     def tick(self) -> None:
-        """Un pas de simulation (déplacements, rencontres, naissances...). À implémenter ensuite."""
-        print("tick")
-        return None
+        """
+        Exemple minimal: chaque humain tente de bouger d'1 case
+        dans une direction aléatoire.
+        (Tu pourras ensuite y ajouter vieillissement, rencontres, procréation…)
+        """
+        humains = list(self.each_human())
+        random.shuffle(humains)
+        
+        for h in self.humans:
+            # vieillir avant ou après selon ta logique
+            h.vieillir()
+            if not h.vivant:
+                # libère la case si mort
+                x, y = h.coordoneeX, h.coordoneeY
+                self.grille[y][x] = None
+                print("L'humain en x: " + x + ", y: " + y + " est mort")
+                continue
+            
+            # tentative de déplacement
+            dir_rand = random.choice([
+                d for d in Direction
+                if (getattr(d, "dx", d.value[0]) != 0 or getattr(d, "dy", d.value[1]) != 0)
+            ])
+            self.deplacer(h, dir_rand)
