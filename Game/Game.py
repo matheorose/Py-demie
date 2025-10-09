@@ -31,10 +31,10 @@ class Game:
             print(f"Vivants: {sum(1 for _ in self.world.each_human())}\n")
 
         for t in range(1, tours + 1):
-            self.world.tick()
 
             if afficher:
-                print(f"=== TOUR {t} ===")
+                print(f"\n\n=== TOUR {t} ===")
+                self.world.tick()
                 print(self.world._to_string())
                 vivants = sum(1 for _ in self.world.each_human())
                 print(f"Vivants: {vivants}\n")
@@ -42,5 +42,5 @@ class Game:
 
 if __name__ == "__main__":
     # Petit test rapide
-    game = Game(width=4, height=4, nb_humains=15, seed=124)
-    game.run(tours=4, afficher=True)
+    game = Game(width=7, height=7, nb_humains=15, seed=125)
+    game.run(tours=60, afficher=True)
