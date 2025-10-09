@@ -53,7 +53,6 @@ class World:
 
     def placer_humain_aleatoire(self, humain: Humain) -> bool:
         """Place un humain sur une case libre au hasard. Retourne True si réussi."""
-        print("placer_humain_aleatoire")
         cases_vides = [
             (x, y)
             for y in range(self.hauteur)
@@ -82,17 +81,19 @@ class World:
         male_ratio: float,
         duree_vie_min: int,
         duree_vie_max: int,
+        age_min: int,
+        age_max: int,
         proba_min: float,
         proba_max: float,
     ) -> Humain:
         """Crée un humain avec des caractéristiques tirées au hasard."""
-        print("creer_humain_aleatoire")
         sexe = Sex.MALE if random.random() < male_ratio else Sex.FEMALE
+        age = random.randint(age_min, age_max)
         duree_vie = random.randint(duree_vie_min, duree_vie_max)
         proba_procreer = random.uniform(proba_min, proba_max)
 
         return Humain(
-            age=0,
+            age=age,
             duree_vie=duree_vie,
             proba_procreer=proba_procreer,
             vivant=True,
@@ -108,7 +109,6 @@ class World:
         Ajoute nb_humains sur la grille à des positions aléatoires.
         Retourne le nombre d'humains effectivement placés.
         """
-        print("remplir_grille")
         humains_places = 0
 
         for _ in range(nb_humains):
@@ -117,6 +117,8 @@ class World:
                 male_ratio,
                 duree_vie_min=60,
                 duree_vie_max=90,
+                age_min=18,
+                age_max=60,
                 proba_min=0.05,
                 proba_max=0.30,
             )
@@ -183,7 +185,6 @@ class World:
                 return True
 
         # 3) aucune case voisine libre -> on ne bouge pas
-        print("Aucune case voisine libre -> on ne bouge pas")
         return False
     
     # + utilitaire
@@ -231,7 +232,8 @@ class World:
                 # libère la case si mort
                 x, y = h.coordoneeX, h.coordoneeY
                 self.grille[y][x] = None
-                print("L'humain en x: " + x + ", y: " + y + " est mort")
+                print("L'humain en x: " + str(x) + ", y: " + str(y) + " est mort")
+                self.humans.remove(h)
                 continue
             
             # tentative de déplacement

@@ -5,9 +5,9 @@ from Models.World import World
 
 class Game:
     def __init__(self,
-                 width: int = 5,
-                 height: int = 5,
-                 nb_humains: int = 5,
+                 width: int,
+                 height: int,
+                 nb_humains: int,
                  seed: Optional[int] = 42):
         """
         Initialise la partie :
@@ -42,5 +42,5 @@ class Game:
 
 if __name__ == "__main__":
     # Petit test rapide
-    game = Game(width=5, height=5, nb_humains=5, seed=123)
+    game = Game(width=4, height=4, nb_humains=15, seed=124)
     game.run(tours=4, afficher=True)
