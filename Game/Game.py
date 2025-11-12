@@ -1,7 +1,7 @@
 # Models/game.py
 import random
 from typing import Optional
-from Models.World import World
+from Models.World import World, PopulationDead
 
 class Game:
     def __init__(self,
@@ -23,21 +23,28 @@ class Game:
         if places < nb_humains:
             print(f"⚠️ Seulement {places}/{nb_humains} humains ont pu être placés.")
 
+    def _compter_vivants(self) -> int:
+        """Retourne le nombre d'humains encore vivants."""
+        return sum(1 for _ in self.world.each_human())
+
     def run(self, tours: int = 4, afficher: bool = True) -> None:
         """Lance la simulation pendant `tours` ticks."""
         if afficher:
             print("=== ÉTAT INITIAL ===")
             print(self.world._to_string())
-            print(f"Vivants: {sum(1 for _ in self.world.each_human())}\n")
+            print(f"Vivants: {self._compter_vivants()}\n")
 
         for t in range(1, tours + 1):
 
             if afficher:
                 print(f"\n\n=== TOUR {t} ===")
+            try:
                 self.world.tick()
+            except PopulationDead:
+                raise SystemExit(0)
+            if afficher:
                 print(self.world._to_string())
-                vivants = sum(1 for _ in self.world.each_human())
-                print(f"Vivants: {vivants}\n")
+                print(f"Vivants: {self._compter_vivants()}\n")
 
 
 if __name__ == "__main__":
