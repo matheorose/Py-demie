@@ -4,10 +4,14 @@ from typing import Iterable, List, Tuple
 from .Humain import Humain
 from Enums.Sex import Sex
 from Enums.Direction import Direction 
-import sys
+
 
 
 Coord = Tuple[int, int]
+
+class PopulationDead(RuntimeError):
+    """Exception levée si plus aucun humain n'est vivant sur la grille."""
+    pass
 
 class World:
     """
@@ -237,8 +241,7 @@ class World:
     
         if not alive_humans:
             print("Toute la population est morte.")
-            sys.exit(0)
-            return  # plus personne
+            raise PopulationDead()
             
         # --- 2) Intentions ---
         ordered_dirs = [
